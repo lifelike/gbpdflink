@@ -9,6 +9,7 @@ PDF files.
 : optional arguments:
 :  --section-format=F format of section numbers (eg "-%d-" or "Section %d")
 :  --start-page=N what page in PDF to start looking for sections in
+:  -g add graphics (red and green rectangles) marking targets and links
 
 ** Example
 

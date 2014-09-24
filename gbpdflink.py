@@ -84,6 +84,7 @@ class Number(object):
 def add_section_links_to_pdf(args):
     infilename = args.inputfilename
     outfilename = args.outputfilename
+    graphics = args.graphics
     print "Analyzing", infilename, "looking for targets and links..."
     numbers = sorted(find_numbers(infilename), key=attrgetter('pos'))
     print "Found", len(numbers), "in input PDF."
@@ -105,7 +106,7 @@ def add_section_links_to_pdf(args):
     nrpages = get_nr_pages(infilename)
     print "PDF pages:", nrpages
     write_pdf_with_links(infilename, valid_links, targets, pagesize,
-                         nrpages, outfilename)
+                         nrpages, outfilename, graphics)
 
 def find_numbers(filename):
     f = open(filename)
@@ -246,15 +247,16 @@ def get_nr_pages(infilename):
     return PdfFileReader(open(infilename, "rb")).getNumPages()
 
 
-def write_pdf_with_links(infilename, links, targets, pagesize, nrpages, outfilename):
+def write_pdf_with_links(infilename, links, targets, pagesize, nrpages,
+                         outfilename, graphics):
     print "Writing", outfilename, "with links added to input PDF."
     print "(Actually just debugging now, so writing some text.)"
-    links_targets_pdf = create_pdf(targets, links, pagesize, nrpages)
+    links_targets_pdf = create_pdf(targets, links, pagesize, nrpages, graphics)
     links_targets_file = StringIO(links_targets_pdf)
     merge_input_with_links_to_output(infilename, links_targets_file,
                                      outfilename)
 
-def create_pdf(targets, links, pagesize, nrpages):
+def create_pdf(targets, links, pagesize, nrpages, graphics):
     print "Creating PDF with links and targets..."
     output = StringIO()
     c = canvas.Canvas(output, pagesize=pagesize)
@@ -271,7 +273,8 @@ def create_pdf(targets, links, pagesize, nrpages):
             y = target.pos.y0
             width = target.pos.x1 - target.pos.x0
             height = target.pos.y1 - target.pos.y0
-            c.rect(x, y, width, height)
+            if graphics:
+                c.rect(x, y, width, height)
             c.bookmarkPage("number" + str(target.value), fit="XYZ",
                            top=target.pos.y1)
         while (len(links)
@@ -283,7 +286,8 @@ def create_pdf(targets, links, pagesize, nrpages):
             y = link.pos.y0
             width = link.pos.x1 - link.pos.x0
             height = link.pos.y1 - link.pos.y0
-            c.rect(x, y, width, height)
+            if graphics:
+                c.rect(x, y, width, height)
             rect = (link.pos.x0, link.pos.y0,
                     link.pos.x1, link.pos.y1)
             c.linkRect(str(link.value),
@@ -328,4 +332,8 @@ if __name__ == '__main__':
                     dest='sectionformat',
                     default='%d',
                     help='section number accepted format')
+    ap.add_argument('-g',
+                    dest='graphics',
+                    action='store_true',
+                    help='add graphics (red and green rectangles) marking targets and links')
     add_section_links_to_pdf(ap.parse_args())
